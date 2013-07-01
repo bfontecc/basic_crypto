@@ -1,48 +1,52 @@
 #!/usr/bin/env node
 
 /**
- * string_to_hex.js
+ * hex_to_string.js
  *
  * @author Bret Fontecchio
- * @fileOverview Module to take a String of text and output hex encoding
+ * @fileOverview Module to take a String of hex represented Unicode and 
+ * outputs a String of text composed of corresponding characters.
  */
+
+var cli_tools = require('./cli_tools.js');
+var crypto_core = require('./crypto_core.js');
 
 /*
- * check_args
+ * Takes every two characters of input and parses them as hex-represented
+ * Unicodes in order to build a String.
+ *
+ * @param hex_str Hex String. A string of hex Unicodes.
+ * @return       String of Unicode characters which had been encoded in hex
  */
-function check_args(){
-	if (process.argv.length != 3) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-function hex_to_string(str) {
+hex_to_string = function (hex_str) {
+	// output
 	var out = "";
-	// hex digits
-	var hdHI, hdLO;
-	// hex character code, as a string
-	var hcs;
-	// hex character code, as an int
-	var hci;
-	// character ready for output
+	// character
 	var c;
-	for (var i = 0; i < str.length; i += 2) {
-		hdHI = str.charAt(i);
-		hdLO = str.charAt(i+1);
-		hcs = hdHI + hdLO;	// concatenation
-		hci = parseInt(hcs, 16);
-		c = String.fromCharCode(hci);
+	for (var i = 0; i < hex_str.length; i += 2) {
+		hdHI = hex_str.charAt(i);
+		hdLO = hex_str.charAt(i+1);
+		c = crypto_core.get_char_from_hex(hdHI, hdLO);
 		out += c;
 	}
 	return out;
 }
 
-if (check_args() == 1) {
-	console.log("Usage: node hex_to_string.js \"<string_of_hex_encoding>\"");
-	process.exit(code=1);
+if (!module.parent) {
+	// this module was called on its own, probably from the command line.
+	// check if one and only one arg was passed
+	if (cli_tools.check_args(1) == 1) {
+		console.log("Usage: node hex_to_string.js \"<string_of_hex_encoding>\"");
+		process.exit(code=1);
+	} else {
+		var out = hex_to_string(process.argv[2]);
+		/* The DOUBLE QUOTES are here to facilitate unix tool style usage with 
+		   xargs even with spaces in the string. space_swap(str, repl) may be
+		   preferable. see cli_tools.js */
+		console.log(cli_tools.quote_string(out));
+	}
 }
 
-// the double quotes are here to facilitate unix tool style usage with xargs even with spaces in the string
-console.log("\"" + hex_to_string(process.argv[2]) + "\"");
+module.exports = {
+	hex_to_string: hex_to_string,
+};

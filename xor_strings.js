@@ -1,46 +1,17 @@
 #!/usr/bin/env node
 
+var cli_tools = require('./cli_tools.js');
+var crypto_core = require('./crypto_core.js');
+var string_to_hex = require('./string_to_hex.js');
+
 /**
- * xor_strings.js
+ * xor two Strings together
  *
- * Bret Fontecchio 2013
- * 
- * use functions xor_strings(s1, s2) to get output string
- * any overflow from a longer string will be truncated without warning!
+ * @param s1 String 1
+ * @param s2 String 2
+ * @return new String of hex bytes representing xor's of each character in the String
  */
-
-var verbose = false;
-
-function check_args() {
-	if (process.argv.length != 4) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-/*
- * pad()
- * outputs a double digit string if possible.
- * ex: pad(3) returns 03, pad(11) returns 11
- *
- * @param num_str The number to pad
- * @return The padded number
- */
-
-function pad(num_str) {
-	switch(num_str.length)
-	{
-		case 0: return "00"; // no break because we're returning
-		case 1: return "0" + num_str;
-		case 2: return num_str;
-		default:
-			if (verbose)
-				console.log("Warning: number over double digits passed to pad(). This cannot be the xor of two ASCII digits");
-	}
-}
-
-function xor_strings(s1, s2) {
+var xor_strings = function (s1, s2) {
 	// check length of each string
 	var len1 = s1.length;
 	var len2 = s2.length;
@@ -52,22 +23,55 @@ function xor_strings(s1, s2) {
 	var out = "";
 	for (var i = 0; i < small_len; i++) {
 		hc1 = s1.charCodeAt(i);
-		if (verbose)
-			console.log("hc1[" + i + "]: " + hc1);
 		hc2 = s2.charCodeAt(i);
-		if (verbose)
-			console.log("hc2[" + i + "]: " + hc2);
-		out += pad((hc1 ^ hc2).toString(16));
+		out += crypto_core.pad_hex_byte((hc1 ^ hc2).toString(16));
 	}
 	return out;
 };
 
-if (check_args() != 0) {
-	console.log("Usage: node xor_strings.js <string1> <string2>");
-	process.exit(code=1);
+/**
+ * xor one String into another.
+ *
+ * xor's String 2 into String 1, starting at offset, and truncating what's left
+ * of String 2. Wraps xor_strings(s1, s2), adding offset feature.
+ * <p>
+ * For attacking the integrity of a stream or pad cipher, the ciphertext should
+ * be s1 in most cases. For implementing a stream or pad, the plaintext should
+ * be s1 and the key should be s2 in most cases.
+ *
+ * @param s1 String 1
+ * @param s2 String 2
+ * @param offset the non-negative index into s1 at which to begin xor'ing with s2
+ * @return s1 with s2 xor'd into it starting at offset.
+ */
+var xor_into = function (s1, s2, offset) {
+	var out = "";
+	var slice1 = string_to_hex.string_to_hex(s1.substring(0, offset));
+	if (slice1) { out += slice1; } 
+	var slice2 = xor_strings(s1.substring(offset, s1.length), s2);
+	if (slice2) { out += slice2; }
+	var slice3= string_to_hex.string_to_hex(s1.substring((offset + s2.length - 1), (s1.length - 1)));
+	if (slice3) { out += slice3; }
+	return out;
 }
 
-var s1 = process.argv[2];
-var s2 = process.argv[3];
-console.log(xor_strings(s1, s2));
+if (!module.parent) {
+	// this module was called on its own, probably from the command line.
+	// check if one and only one arg was passed
+	if (cli_tools.check_args(2) == 1) {
+		console.log("Usage: ./xor_strings \"<string1> <string2>\"");
+		process.exit(code=1);
+	} else {
+		var s1 = process.argv[2];
+		var s2 = process.argv[3];
+		var out = xor_strings(s1, s2);
+		console.log(out);
+	}
+}
 
+module.exports = {
+	crypto_core: crypto_core,
+	cli_tools: cli_tools,
+	xor_strings: xor_strings,
+	xor_into: xor_into,
+};
