@@ -24,10 +24,9 @@ hex_to_string = function (hex_str) {
 	// character
 	var c;
 	for (var i = 0; i < hex_str.length; i += 2) {
-		hdHI = hex_str.charAt(i);
-		hdLO = hex_str.charAt(i+1);
-		c = crypto_core.get_char_from_hex(hdHI, hdLO);
-		out += c;
+		var hex_byte = hex_str.substr(i, i+2);
+		c = crypto_core.get_num_from_hex(hex_byte);
+		out += String.fromCharCode(c);
 	}
 	return out;
 }

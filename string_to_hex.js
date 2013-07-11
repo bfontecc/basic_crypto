@@ -36,10 +36,7 @@ if (!module.parent) {
 		process.exit(code=1);
 	} else {
 		var out = string_to_hex(cli_tools.strip_quotes(process.argv[2]));
-		/* The DOUBLE QUOTES are here to facilitate unix tool style usage with 
-		   xargs even with spaces in the string. space_swap(str, repl) may be
-		   preferable. see cli_tools.js */
-		console.log(cli_tools.quote_string(out));
+		console.log(out);
 	}
 }
 

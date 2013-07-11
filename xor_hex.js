@@ -39,7 +39,7 @@ function xor_hex(hs1, hs2) {
 		arr2[i] = crypto_core.get_num_from_hex(arr2[i]);
 		var xord = (arr1[i] ^ arr2[i]);
 		xord = xord.toString(16);
-		out += xord;
+		out += crypto_core.pad_hex_byte(xord);
 	}
 	return out;
 }
